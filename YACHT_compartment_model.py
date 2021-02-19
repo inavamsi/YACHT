@@ -200,7 +200,7 @@ def plot(dict_ts):
 	values,
 	columns=keys)
 	st.line_chart(chart_data)
-st.write("This is the simulation of for the above parameters.")
+st.write("This is the simulation for the chosen parameters.")
 
 simulate()
 plot(compartment_ts)
