@@ -15,18 +15,18 @@ days=2000
 
 cumulative_quarantine=0
 
-st.write("Epidemic parameters")
-beta=st.slider("Rate of infection", min_value=0.0 , max_value=1.0 , value=0.11 , step=0.01 , format=None , key=None )
-gamma=st.slider("Rate of recovery", min_value=0.0 , max_value=1.0 , value=0.05 , step=0.01 , format=None , key=None )
-initial_infection=st.slider("Select inital infection proportion", min_value=0.0 , max_value=1.0 , value=0.01 , step=1/pop , format=None , key=None )
-st.write("------------------------------------------------------------------------------------")
+st.sidebar.write("Epidemic parameters")
+beta=st.sidebar.slider("Rate of infection", min_value=0.0 , max_value=1.0 , value=0.11 , step=0.01 , format=None , key=None )
+gamma=st.sidebar.slider("Rate of recovery", min_value=0.0 , max_value=1.0 , value=0.05 , step=0.01 , format=None , key=None )
+initial_infection=st.sidebar.slider("Select inital infection proportion", min_value=0.0 , max_value=1.0 , value=0.01 , step=1/pop , format=None , key=None )
+st.sidebar.write("------------------------------------------------------------------------------------")
 
-st.write("YACHT parameters")
-n=st.slider("Select number of pools", min_value=0 , max_value=100 , value=9 , step=1 , format=None , key=None )
-frac_poolsize = st.slider("Select Poolsize/Population", min_value=0.0 , max_value=1.0/n , value=None , step=1/pop , format=None , key=None )
-r = st.slider("Select rate of testing per timestep", min_value=0.0 , max_value=1.0 , value=0.5 , step=0.01 , format=None , key=None)
+st.sidebar.write("YACHT parameters")
+n=st.sidebar.slider("Select number of pools", min_value=0 , max_value=100 , value=9 , step=1 , format=None , key=None )
+frac_poolsize = st.sidebar.slider("Select Poolsize/Population", min_value=0.0 , max_value=1.0/n , value=None , step=1/pop , format=None , key=None )
+r = st.sidebar.slider("Select rate of testing per timestep", min_value=0.0 , max_value=1.0 , value=0.5 , step=0.01 , format=None , key=None)
 poolsize=frac_poolsize*pop
-st.write("------------------------------------------------------------------------------------")
+st.sidebar.write("------------------------------------------------------------------------------------")
 
 badges=['Green','Orange','Red']
 states=['S','I','R']
@@ -36,16 +36,16 @@ for state in states:
 	for badge in badges:
 		compartment_ts[state][badge]=[]
 
-st.write("Badge parameters")
-st.write("Testing ratio for Green badge should be greater than Orange which in turn should be greater than Red.")
+st.sidebar.write("Badge parameters")
+st.sidebar.write("Testing ratio for Green badge should be greater than Orange which in turn should be greater than Red.")
 testing_ratio={}
-testing_ratio['Green']=st.slider("Select testing ratio for Green badge", min_value=1 , max_value=10 , value=3 , step=1 , format=None , key=None )
-testing_ratio['Orange']=st.slider("Select testing ratio for Orange badge", min_value=0 , max_value=10 , value=2 , step=1 , format=None , key=None )
-testing_ratio['Red']=st.slider("Select testing ratio for Red badge", min_value=0 , max_value=10 , value=1 , step=1 , format=None , key=None )
+testing_ratio['Green']=st.sidebar.slider("Select testing ratio for Green badge", min_value=1 , max_value=10 , value=3 , step=1 , format=None , key=None )
+testing_ratio['Orange']=st.sidebar.slider("Select testing ratio for Orange badge", min_value=0 , max_value=10 , value=2 , step=1 , format=None , key=None )
+testing_ratio['Red']=st.sidebar.slider("Select testing ratio for Red badge", min_value=0 , max_value=10 , value=1 , step=1 , format=None , key=None )
 
 freedom={}
 freedom['Green']=1
-freedom['Orange']=st.slider("Select freedom for Orange badge, given that it is 1 for Green and 0 for Red", min_value=0.0 , max_value=1.0 , value=0.5 , step=0.1 , format=None , key=None )
+freedom['Orange']=st.sidebar.slider("Select freedom for Orange badge, given that it is 1 for Green and 0 for Red", min_value=0.0 , max_value=1.0 , value=0.5 , step=0.1 , format=None , key=None )
 freedom['Red']=0
 
 def weighted_sum(d):
@@ -200,7 +200,6 @@ def plot(dict_ts):
 	values,
 	columns=keys)
 	st.line_chart(chart_data)
-st.write("------------------------------------------------------------------------------------")
 st.write("This is the simulation of for the above parameters.")
 
 simulate()
