@@ -6,6 +6,7 @@ import random
 st.write("""
 # YACHT using a compartment model.
 A badging cum pooling mechanism for effective epidemic control
+For any queries contact ibe214@nyu.edu
 """)
 st.write("------------------------------------------------------------------------------------")
 
