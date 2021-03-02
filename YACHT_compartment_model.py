@@ -208,6 +208,7 @@ plot(compartment_ts)
 
 st.write("------------------------------------------------------------------------------------")
 
+st.header("Cost Function")
 st.write("Goal is to minimise Cost function constrained by a maximum value for prevalence :")
 st.write("Cost function =  a(Number of Pools) + b(Pandemic Size) + c(Economic Cost) ")#+ d(Logistic Cost)") 
 st.write(" -- Number of pools refers to the total number of pooling station.")
