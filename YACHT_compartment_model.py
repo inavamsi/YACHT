@@ -24,9 +24,10 @@ st.sidebar.write("--------------------------------------------------------------
 
 st.sidebar.write("YACHT parameters")
 n=st.sidebar.slider("Select number of pools", min_value=0 , max_value=100 , value=9 , step=1 , format=None , key=None )
-frac_poolsize = st.sidebar.slider("Select Poolsize/Population", min_value=0.0 , max_value=1.0/n , value=None , step=1/pop , format=None , key=None )
-r = st.sidebar.slider("Select rate of testing per timestep", min_value=0.0 , max_value=1.0 , value=0.5 , step=0.01 , format=None , key=None)
+frac_poolsize = st.sidebar.slider("Select Poolsize/Population", min_value=0.0 , max_value=1.0/n , value=0.1 , step=1/pop , format=None , key=None )
+r = st.sidebar.slider("Select rate of testing per timestep", min_value=0.0 , max_value=1.0 , value=0.9 , step=0.01 , format=None , key=None)
 poolsize=frac_poolsize*pop
+delta=st.sidebar.slider("Rate of faking a badge", min_value=0.0 , max_value=1.0 , value=0.01 , step=0.01 , format=None , key=None)
 st.sidebar.write("------------------------------------------------------------------------------------")
 
 badges=['Green','Orange','Red']
@@ -122,6 +123,7 @@ def simulate():
 			+tau('S','Orange','S','Green',compartment_value)
 			+tau('S','Red','S','Orange',compartment_value)
 			-beta*beta_summation('Green',compartment_value)
+			+delta*compartment_value['S']['Red']
 			)
 
 		d_compartment_value['S']['Orange']=dt*(
@@ -134,12 +136,14 @@ def simulate():
 		d_compartment_value['S']['Red']=dt*(
 			-tau('S','Red','S','Green',compartment_value)
 			+tau('S','Orange','S','Red',compartment_value)
+			-delta*compartment_value['S']['Red']
 			)
 
 		d_compartment_value['I']['Green']=dt*(
 			-tau('I','Green','I','Orange',compartment_value)
 			+beta*beta_summation('Green',compartment_value)
 			-gamma*compartment_value['I']['Green']
+			+delta*compartment_value['I']['Red']
 			)
 
 		d_compartment_value['I']['Orange']=dt*(
@@ -152,6 +156,7 @@ def simulate():
 		d_compartment_value['I']['Red']=dt*(
 			tau('I','Orange','I','Red',compartment_value)
 			-gamma*compartment_value['I']['Red']
+			-delta*compartment_value['I']['Red']
 			)
 
 		d_compartment_value['R']['Green']=dt*(
@@ -159,6 +164,7 @@ def simulate():
 			+tau('R','Orange','R','Green',compartment_value)
 			+tau('R','Red','R','Green',compartment_value)
 			+gamma*compartment_value['I']['Green']
+			+delta*compartment_value['R']['Red']
 			)
 
 		d_compartment_value['R']['Orange']=dt*(
@@ -172,6 +178,7 @@ def simulate():
 			-tau('R','Red','R','Green',compartment_value)
 			+tau('R','Orange','R','Red',compartment_value)
 			+gamma*compartment_value['I']['Red']
+			-delta*compartment_value['R']['Red']
 			)
 
 		for state in states:
