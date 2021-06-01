@@ -4,10 +4,10 @@ import numpy as np
 import random
 
 st.write("""
-# YACHT using a compartment model.
-A badging cum pooling mechanism for effective epidemic control.
+# YACHT protocol
+A badging cum pooling mechanism for effective epidemic control. Powered by [HealthBadge](https://www.healthbadge.org/).
 """)
-st.write("For any queries contact ibe214@nyu.edu")
+st.write("This is a simple mechanism for disease control where YACHT stands for 'Yet Another COVID Health Testing Protocol'. In this system we show improved testing rate while improving privacy at a cost of quarantining those that are infected. This is carried out through a badge which can be one of 3 colors : Green(G), Orange(O) and Red(R). A person testing negative in a pool is immediately givena green badge which entails complete freedom. An Orange badge obtained on testing ngetaive in a pool partially restricts the agent till the next test. A Red badge begotten on testing negative twice in a row mandates strict quarantine. We see that this simple system can control prevalence effectively without violating privacy of an individual.")
 st.write("------------------------------------------------------------------------------------")
 
 pop=100
