@@ -22,12 +22,16 @@ gamma=st.sidebar.slider("Rate of recovery", min_value=0.0 , max_value=1.0 , valu
 initial_infection=st.sidebar.slider("Select inital infection proportion", min_value=0.0 , max_value=1.0 , value=0.01 , step=1/pop , format=None , key=None )
 st.sidebar.write("------------------------------------------------------------------------------------")
 
-st.sidebar.write("YACHT parameters")
+st.sidebar.write("Testing parameters")
+
+fn=st.sidebar.slider("Select false negative rate", min_value=0.0 , max_value=1.0 , value=0.0 , step=0.1 , format=None , key=None )
+fp=st.sidebar.slider("Select false positive rate", min_value=0.0 , max_value=1.0 , value=0.0 , step=0.1 , format=None , key=None )
 n=st.sidebar.slider("Select number of pools", min_value=0 , max_value=100 , value=9 , step=1 , format=None , key=None )
 frac_poolsize = st.sidebar.slider("Select Poolsize/Population", min_value=0.0 , max_value=1.0/n , value=0.1 , step=1/pop , format=None , key=None )
 r = st.sidebar.slider("Select rate of testing per timestep", min_value=0.0 , max_value=1.0 , value=0.9 , step=0.01 , format=None , key=None)
 poolsize=frac_poolsize*pop
-delta=st.sidebar.slider("Rate of faking a badge", min_value=0.0 , max_value=1.0 , value=0.01 , step=0.01 , format=None , key=None)
+
+
 st.sidebar.write("------------------------------------------------------------------------------------")
 
 badges=['Green','Orange','Red']
@@ -39,6 +43,8 @@ for state in states:
 		compartment_ts[state][badge]=[]
 
 st.sidebar.write("Badge parameters")
+delta=st.sidebar.slider("Rate of faking a badge", min_value=0.0 , max_value=1.0 , value=0.01 , step=0.01 , format=None , key=None)
+
 st.sidebar.write("Testing ratio for Green badge should be greater than Orange which in turn should be greater than Red.")
 testing_ratio={}
 testing_ratio['Green']=st.sidebar.slider("Select testing ratio for Green badge", min_value=1 , max_value=10 , value=3 , step=1 , format=None , key=None )
@@ -46,9 +52,10 @@ testing_ratio['Orange']=st.sidebar.slider("Select testing ratio for Orange badge
 testing_ratio['Red']=st.sidebar.slider("Select testing ratio for Red badge", min_value=0 , max_value=10 , value=1 , step=1 , format=None , key=None )
 
 freedom={}
-freedom['Green']=1
-freedom['Orange']=st.sidebar.slider("Select freedom for Orange badge, given that it is 1 for Green and 0 for Red", min_value=0.0 , max_value=1.0 , value=0.5 , step=0.1 , format=None , key=None )
-freedom['Red']=0
+freedom['Green']=st.sidebar.slider("Select freedom for Green badge (recommended 1)", min_value=0.0 , max_value=1.0 , value=1.0 , step=0.1 , format=None , key=None )
+freedom['Orange']=st.sidebar.slider("Select freedom for Orange badge", min_value=0.0 , max_value=1.0 , value=0.5 , step=0.1 , format=None , key=None )
+freedom['Red']=st.sidebar.slider("Select freedom for Red badge (recommended 0)", min_value=0.0 , max_value=1.0 , value=0.0 , step=0.1 , format=None , key=None )
+
 
 def weighted_sum(d):
 	wsum=0
@@ -65,7 +72,10 @@ def effective_pool_prevalence(d):
 	return numerator/denominator
 
 def effective_false_positive_rate(d):
-	return 1 - (1-effective_pool_prevalence(d))**(frac_poolsize*pop-1)
+	return fp*(1-effective_pool_prevalence(d))**(frac_poolsize*pop-1)+(1-fn)*(1 - (1-effective_pool_prevalence(d))**(frac_poolsize*pop-1))
+
+def effective_false_negative_rate(d):
+	return fn
 
 def prop_tested(state,badge,d):
 	return r*dt*n*frac_poolsize*testing_ratio[badge]*d[state][badge]/weighted_sum(d)
@@ -89,7 +99,7 @@ def update_cumulative_quarantine(d):
 	for state in states:
 		for badge in badges:
 			cumulative_quarantine+=(1-freedom[badge])*d[state][badge]
-	
+
 
 def beta_summation(rep_badge,d):
 	bsum=0
@@ -141,6 +151,8 @@ def simulate():
 
 		d_compartment_value['I']['Green']=dt*(
 			-tau('I','Green','I','Orange',compartment_value)
+			+tau('I','Orange','I','Green',compartment_value)
+			+tau('I','Red','I','Green',compartment_value)
 			+beta*beta_summation('Green',compartment_value)
 			-gamma*compartment_value['I']['Green']
 			+delta*compartment_value['I']['Red']
@@ -148,13 +160,15 @@ def simulate():
 
 		d_compartment_value['I']['Orange']=dt*(
 			-tau('I','Orange','I','Red',compartment_value)
+			-tau('I','Orange','I','Green',compartment_value)
 			+tau('I','Green','I','Orange',compartment_value)
 			+beta*beta_summation('Orange',compartment_value)
 			-gamma*compartment_value['I']['Orange']
 			)
 
 		d_compartment_value['I']['Red']=dt*(
-			tau('I','Orange','I','Red',compartment_value)
+			-tau('I','Red','I','Green',compartment_value)
+			+tau('I','Orange','I','Red',compartment_value)
 			-gamma*compartment_value['I']['Red']
 			-delta*compartment_value['I']['Red']
 			)
@@ -198,7 +212,7 @@ def plot(dict_ts):
 		for state in states:
 			for badge in badges:
 				values[-1].append(dict_ts[state][badge][i])
-	
+
 	for state in states:
 		for badge in badges:
 			keys.append(state+'_'+badge)
@@ -208,16 +222,47 @@ def plot(dict_ts):
 	values,
 	columns=keys)
 	st.line_chart(chart_data)
-st.write("This is the simulation for the chosen parameters.")
+
+def plot_SIR(dict_ts):
+	values=[]
+	keys=[]
+
+	for i in range(len(dict_ts['S']['Green'])):
+		values.append([])
+		for state in states:
+			values[-1].append(0)
+
+	for i in range(len(dict_ts['S']['Green'])):
+		for indx,state in enumerate(states):
+			for badge in badges:
+				values[i][indx]+=dict_ts[state][badge][i]
+
+	for state in states:
+			keys.append(state)
+
+
+	chart_data = pd.DataFrame(
+	values,
+	columns=keys)
+	st.line_chart(chart_data)
+
+
+
+
 
 simulate()
+st.write("This is the timeseries plot for the 9 compartments.")
 plot(compartment_ts)
+st.write("This is the timeseries plot for the underlying disease states {S,I,R}.")
+plot_SIR(compartment_ts)
+
+
 
 st.write("------------------------------------------------------------------------------------")
 
 st.header("Cost Function")
 st.write("Goal is to minimise Cost function constrained by a maximum value for prevalence :")
-st.write("Cost function =  a(Number of Pools) + b(Pandemic Size) + c(Economic Cost) ")#+ d(Logistic Cost)") 
+st.write("Cost function =  a(Number of Pools) + b(Pandemic Size) + c(Economic Cost) ")#+ d(Logistic Cost)")
 st.write(" -- Number of pools refers to the total number of pooling station.")
 st.write(" -- Pandmeic Size refers to percentage of total that got infected.")
 st.write(" -- Economic cost refers to the economic loss due to quarantine and restrictions. This percentage represents the total time lost.")
