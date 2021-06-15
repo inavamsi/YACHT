@@ -67,7 +67,7 @@ def weighted_sum(d):
 def effective_pool_prevalence(d):
 	numerator=0
 	for badge in badges:
-		numerator+=d['I'][badge]
+		numerator+=d['I'][badge]*testing_ratio[badge]
 	denominator =weighted_sum(d)
 	return numerator/denominator
 
