@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import random
 
 st.write("""
 # YACHT protocol
@@ -10,14 +9,14 @@ A badging cum pooling mechanism for effective epidemic control. Powered by [Heal
 st.write("This is a simple mechanism for disease control where YACHT stands for 'Yet Another COVID Health Testing Protocol'. In this system we show improved testing rate while improving privacy at a cost of quarantining those that are infected. This is carried out through a badge which can be one of 3 colors : Green(G), Orange(O) and Red(R). A person testing negative in a pool is immediately givena green badge which entails complete freedom. An Orange badge obtained on testing ngetaive in a pool partially restricts the agent till the next test. A Red badge begotten on testing negative twice in a row mandates strict quarantine. We see that this simple system can control prevalence effectively without violating privacy of an individual.")
 st.write("------------------------------------------------------------------------------------")
 
-pop=100
+pop=1000
 dt=0.1
 days=2000
 
 cumulative_quarantine=0
 
 st.sidebar.write("Epidemic parameters")
-beta=st.sidebar.slider("Rate of infection", min_value=0.0 , max_value=1.0 , value=0.11 , step=0.01 , format=None , key=None )
+beta=st.sidebar.slider("Rate of infection", min_value=0.0 , max_value=1.0 , value=0.10 , step=0.01 , format=None , key=None )
 gamma=st.sidebar.slider("Rate of recovery", min_value=0.0 , max_value=1.0 , value=0.05 , step=0.01 , format=None , key=None )
 initial_infection=st.sidebar.slider("Select inital infection proportion", min_value=0.0 , max_value=1.0 , value=0.01 , step=1/pop , format=None , key=None )
 st.sidebar.write("------------------------------------------------------------------------------------")
@@ -26,9 +25,9 @@ st.sidebar.write("Testing parameters")
 
 fn=st.sidebar.slider("Select false negative rate", min_value=0.0 , max_value=1.0 , value=0.0 , step=0.1 , format=None , key=None )
 fp=st.sidebar.slider("Select false positive rate", min_value=0.0 , max_value=1.0 , value=0.0 , step=0.1 , format=None , key=None )
-n=st.sidebar.slider("Select number of pools", min_value=0 , max_value=100 , value=9 , step=1 , format=None , key=None )
-frac_poolsize = st.sidebar.slider("Select Poolsize/Population", min_value=0.0 , max_value=1.0/n , value=0.1 , step=1/pop , format=None , key=None )
-r = st.sidebar.slider("Select rate of testing per timestep", min_value=0.0 , max_value=1.0 , value=0.9 , step=0.01 , format=None , key=None)
+n=st.sidebar.slider("Select number of pools", min_value=0 , max_value=100 , value=5 , step=1 , format=None , key=None )
+frac_poolsize = st.sidebar.slider("Select Poolsize/Population", min_value=0.0 , max_value=1.0/n , value=0.05 , step=1/pop , format=None , key=None )
+r = st.sidebar.slider("Select rate of testing per timestep", min_value=0.0 , max_value=1.0 , value=0.5 , step=0.01 , format=None , key=None)
 poolsize=frac_poolsize*pop
 
 
@@ -43,7 +42,7 @@ for state in states:
 		compartment_ts[state][badge]=[]
 
 st.sidebar.write("Badge parameters")
-delta=st.sidebar.slider("Rate of faking a badge", min_value=0.0 , max_value=1.0 , value=0.01 , step=0.01 , format=None , key=None)
+delta=st.sidebar.slider("Rate of faking a badge", min_value=0.0 , max_value=1.0 , value=0.0 , step=0.01 , format=None , key=None)
 
 st.sidebar.write("Testing ratio for Green badge should be greater than Orange which in turn should be greater than Red.")
 testing_ratio={}
@@ -81,13 +80,27 @@ def prop_tested(state,badge,d):
 	return r*dt*n*frac_poolsize*testing_ratio[badge]*d[state][badge]/weighted_sum(d)
 
 def tau(state1,badge1,state2,badge2,d):
+	if state1!=state2:
+		print("Error!Tau requires both states to be the same.")
+		return None
+
+	state=state1
+	badge_value={'Green':3,'Orange':2,'Red':1}
 	value=prop_tested(state1,badge1,d)
-	if state1 =='I':
-		return value
-	elif badge2=='Green':
-		return value*(1-effective_false_positive_rate(d))
-	else :
-		return value*effective_false_positive_rate(d)
+	e_fp=effective_false_positive_rate(d)
+	e_fn=effective_false_negative_rate(d)
+
+	if state =='S' or state == 'R':
+		if badge_value[badge1]>badge_value[badge2]:
+			return e_fp*value
+		else:
+			return (1-e_fp)*value
+
+	if state == 'I':
+		if badge_value[badge1]>badge_value[badge2]:
+			return (1-e_fn)*value
+		else:
+			return e_fn*value
 
 def update_compartment_ts(d):
 	for state in states:
@@ -101,10 +114,10 @@ def update_cumulative_quarantine(d):
 			cumulative_quarantine+=(1-freedom[badge])*d[state][badge]
 
 
-def beta_summation(rep_badge,d):
+def beta_summation(rep_badge,compartment_value):
 	bsum=0
 	for badge in badges:
-		bsum+=freedom[rep_badge]*freedom[badge]*d['S'][rep_badge]*d['I'][badge]
+		bsum+=freedom[rep_badge]*freedom[badge]*compartment_value['S'][rep_badge]*compartment_value['I'][badge]
 	return bsum
 
 def simulate():
