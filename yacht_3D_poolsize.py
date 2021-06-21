@@ -12,24 +12,24 @@ from matplotlib.ticker import LinearLocator
 import numpy as np
 
 
-pop=100
+pop=1000
 dt=0.1
 days=2000
 
 
 st.sidebar.write("Epidemic parameters")
-beta=st.sidebar.slider("Rate of infection", min_value=0.0 , max_value=1.0 , value=0.11 , step=0.01 , format=None , key=None )
+beta=st.sidebar.slider("Rate of infection", min_value=0.0 , max_value=1.0 , value=0.10 , step=0.01 , format=None , key=None )
 gamma=st.sidebar.slider("Rate of recovery", min_value=0.0 , max_value=1.0 , value=0.05 , step=0.01 , format=None , key=None )
 initial_infection=st.sidebar.slider("Select inital infection proportion", min_value=0.0 , max_value=1.0 , value=0.01 , step=1/pop , format=None , key=None )
 st.sidebar.write("------------------------------------------------------------------------------------")
 
 st.sidebar.write("Testing parameters")
 
-fn=st.sidebar.slider("Select false negative rate", min_value=0.0 , max_value=1.0 , value=0.0 , step=0.1 , format=None , key=None )
-fp=st.sidebar.slider("Select false positive rate", min_value=0.0 , max_value=1.0 , value=0.0 , step=0.1 , format=None , key=None )
-n=st.sidebar.slider("Select number of pools", min_value=0 , max_value=100 , value=9 , step=1 , format=None , key=None )
-frac_poolsize = st.sidebar.slider("Select Poolsize/Population", min_value=0.0 , max_value=1.0/n , value=0.1 , step=1/pop , format=None , key=None )
-r = st.sidebar.slider("Select rate of testing per timestep", min_value=0.0 , max_value=1.0 , value=0.9 , step=0.01 , format=None , key=None)
+fn=st.sidebar.slider("Select false negative rate", min_value=0.0 , max_value=1.0 , value=0.1 , step=0.1 , format=None , key=None )
+fp=st.sidebar.slider("Select false positive rate", min_value=0.0 , max_value=1.0 , value=0.1 , step=0.1 , format=None , key=None )
+n=st.sidebar.slider("Select number of pools", min_value=0 , max_value=100 , value=30 , step=1 , format=None , key=None )
+frac_poolsize = st.sidebar.slider("Select Poolsize/Population", min_value=0.0 , max_value=1.0/n , value=0.01 , step=1/pop , format=None , key=None )
+r = st.sidebar.slider("Select rate of testing per timestep", min_value=0.0 , max_value=1.0 , value=0.5 , step=0.01 , format=None , key=None)
 poolsize=frac_poolsize*pop
 
 
@@ -77,17 +77,31 @@ def simulate(n, frac_poolsize):
 	def effective_false_negative_rate(d):
 		return fn
 
-	def prop_tested(state,badge,d, n, frac_poolsize):
+	def prop_tested(state,badge,d,n,frac_poolsize):
 		return r*dt*n*frac_poolsize*testing_ratio[badge]*d[state][badge]/weighted_sum(d)
 
-	def tau(state1,badge1,state2,badge2,d, n, frac_poolsize):
-		value=prop_tested(state1,badge1,d, n, frac_poolsize)
-		if state1 =='I':
-			return value
-		elif badge2=='Green':
-			return value*(1-effective_false_positive_rate(d))
-		else :
-			return value*effective_false_positive_rate(d)
+	def tau(state1,badge1,state2,badge2,d,n,frac_poolsize):
+		if state1!=state2:
+			print("Error!Tau requires both states to be the same.")
+			return None
+
+		state=state1
+		badge_value={'Green':3,'Orange':2,'Red':1}
+		value=prop_tested(state1,badge1,d,n,frac_poolsize)
+		e_fp=effective_false_positive_rate(d)
+		e_fn=effective_false_negative_rate(d)
+
+		if state =='S' or state == 'R':
+			if badge_value[badge1]>badge_value[badge2]:
+				return e_fp*value
+			else:
+				return (1-e_fp)*value
+
+		if state == 'I':
+			if badge_value[badge1]>badge_value[badge2]:
+				return (1-e_fn)*value
+			else:
+				return e_fn*value
 
 	def update_cumulative_quarantine(d):
 		cumulative_quarantine=0
