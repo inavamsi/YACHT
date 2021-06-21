@@ -23,10 +23,10 @@ st.sidebar.write("--------------------------------------------------------------
 
 st.sidebar.write("Testing parameters")
 
-fn=st.sidebar.slider("Select false negative rate", min_value=0.0 , max_value=1.0 , value=0.0 , step=0.1 , format=None , key=None )
-fp=st.sidebar.slider("Select false positive rate", min_value=0.0 , max_value=1.0 , value=0.0 , step=0.1 , format=None , key=None )
-n=st.sidebar.slider("Select number of pools", min_value=0 , max_value=100 , value=5 , step=1 , format=None , key=None )
-frac_poolsize = st.sidebar.slider("Select Poolsize/Population", min_value=0.0 , max_value=1.0/n , value=0.05 , step=1/pop , format=None , key=None )
+fn=st.sidebar.slider("Select false negative rate", min_value=0.0 , max_value=1.0 , value=0.1 , step=0.1 , format=None , key=None )
+fp=st.sidebar.slider("Select false positive rate", min_value=0.0 , max_value=1.0 , value=0.1 , step=0.1 , format=None , key=None )
+n=st.sidebar.slider("Select number of pools", min_value=0 , max_value=100 , value=30 , step=1 , format=None , key=None )
+frac_poolsize = st.sidebar.slider("Select Poolsize/Population", min_value=0.0 , max_value=1.0/n , value=0.01 , step=1/pop , format=None , key=None )
 r = st.sidebar.slider("Select rate of testing per timestep", min_value=0.0 , max_value=1.0 , value=0.5 , step=0.01 , format=None , key=None)
 poolsize=frac_poolsize*pop
 
