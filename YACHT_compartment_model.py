@@ -286,12 +286,16 @@ cumulative_quarantine_percentage=cumulative_quarantine/days
 st.write("------------------------------------------------------------------------------------")
 
 st.write("The number of pools is "+str(n)+".")
-a=st.slider("Select scaling parameter for 'Number of Pools'")
+a=st.slider("Select scaling parameter for 'Number of Pools'", min_value=0 , max_value=10000 , value=0 , step=1 , format=None , key=None )
 st.write("Total infected percentage is "+str(total_infected_percentage)+". Here 0 means no infection while 1 means no one is susceptible.")
-b=st.slider("Select scaling parameter for 'Total Infected percentage'")
+b=st.slider("Select scaling parameter for 'Total Infected percentage'", min_value=0 , max_value=10000 , value=0 , step=1 , format=None , key=None )
 st.write("Cumulative Quarantine is "+str(cumulative_quarantine_percentage)+ ". Here 0 means nobody is quarantined at all, while 1 means everyone is fully quarantined for the entire duration.")
-c=st.slider("Select scaling parameter for 'Cumulative Quarantine'")
+c=st.slider("Select scaling parameter for 'Cumulative Quarantine'", min_value=0 , max_value=10000 , value=0 , step=1 , format=None , key=None )
+
+total_tests=(int)(r*days*n)
+st.write("Total number of tests is "+str(total_tests)+ ". ")
+d=st.slider("Select scaling parameter for 'total tests'", min_value=0 , max_value=10000 , value=0 , step=1 , format=None , key=None )
 
 
-cost = a*number_of_pools + b*total_infected_percentage + c*cumulative_quarantine_percentage
+cost = a*number_of_pools + b*total_infected_percentage + c*cumulative_quarantine_percentage +d*total_tests
 st.write("The cost is "+ str(cost))
