@@ -8,6 +8,8 @@ infected_G2R=None
 not_infected_R2G=None
 false_positives=None
 false_negatives=None
+fn=None
+fp=None
 
 n=1000
 poolsize=None
@@ -117,8 +119,6 @@ class Agent():
 
 class Pool():
     def __init__(self):
-        self.fn=0
-        self.fp=0
         self.agents=[]
 
     def new_day(self):
@@ -139,10 +139,12 @@ class Pool():
                 break
 
         if result=='Positive':
-            if random.random()<self.fn:
+            global fn
+            if random.random()<fn:
                 result='Negative'
         else:
-            if random.random()<self.fp:
+            global fp
+            if random.random()<fp:
                 result='Positive'
 
         for agent in self.agents:
@@ -297,34 +299,46 @@ def histogram():
     random.seed(42)
 
     global poolsize
-    inf_G2R_list=[]
-    not_inf_R2G_list=[]
-    infection_proportion_list=[]
+    global fn
+    global fp
+    inf_G2R_list=[[],[],[],[]]
+    not_inf_R2G_list=[[],[],[],[]]
+    infection_proportion_list=[[],[],[],[]]
 
-    poolsize_list=[0,1,2,3,4,5,10,15,20,25,30]
+    fn_fp=[(0,0),(0.2,0),(0.2,0.2),(0,0.2)]
 
-    for poolsize in poolsize_list:
-        a,b,c=worlds(50)
-        inf_G2R_list.append(a)
-        not_inf_R2G_list.append(b)
-        infection_proportion_list.append(c)
+    poolsize_list=[0,1,2,5,10,15,20,25,30]
 
-    plt.plot(poolsize_list,inf_G2R_list)
+    for indx,(fn,fp) in enumerate(fn_fp):
+        print(len(fn_fp)-indx)
+        for poolsize in poolsize_list:
+            a,b,c=worlds(101)
+            inf_G2R_list[indx].append(a)
+            not_inf_R2G_list[indx].append(b)
+            infection_proportion_list[indx].append(c)
+
+    for indx in range(len(fn_fp)):
+        plt.plot(poolsize_list,inf_G2R_list[indx],label=str(fn_fp[indx]))
     plt.title('Poolsize vs Average time for an Infected \n agent with a Green Badge to get Red Badge')
     plt.xlabel('Poolsize')
     plt.ylabel('Average Time in Days')
+    plt.legend()
     plt.show()
 
-    plt.plot(poolsize_list,not_inf_R2G_list)
+    for indx in range(len(fn_fp)):
+        plt.plot(poolsize_list,not_inf_R2G_list[indx],label=str(fn_fp[indx]))
     plt.title('Poolsize vs Average time for a Non-Infected \n agent with a Red Badge to get Green Badge')
     plt.xlabel('Poolsize')
     plt.ylabel('Average Time in Days')
+    plt.legend()
     plt.show()
 
-    plt.plot(poolsize_list,infection_proportion_list)
+    for indx in range(len(fn_fp)):
+        plt.plot(poolsize_list,infection_proportion_list[indx],label=str(fn_fp[indx]))
     plt.title('Poolsize vs Total Proportion of population \n that gets infected in a duration of '+str(days)+' days')
     plt.xlabel('Poolsize')
     plt.ylabel('Proportion of population that got infected')
+    plt.legend()
     plt.show()
 
     print(inf_G2R_list, not_inf_R2G_list, infection_proportion_list)
