@@ -3,6 +3,11 @@ import copy
 from statistics import mean
 import matplotlib.pyplot as plt
 import matplotlib
+import numpy as np
+import importlib.util
+import os.path as osp
+from matplotlib import cm
+from matplotlib.ticker import LinearLocator
 
 infected_G2R=None
 not_infected_R2G=None
@@ -31,6 +36,9 @@ testing_ratio={}
 testing_ratio['Green']=1
 testing_ratio['Orange']=0.4
 testing_ratio['Red']=0.2
+#testing_ratio['Green']=1
+#testing_ratio['Orange']=0.375
+#testing_ratio['Red']=0.125
 
 ts=None
 
@@ -294,7 +302,7 @@ def worlds(no):
     #print('Total False Negatives : '+str((false_negatives)/no))
     print('Proportion of population Infected : '+str(infections/(n*no)))
 
-def histogram():
+def histogram_fn_fp():
 
     random.seed(42)
 
@@ -319,17 +327,17 @@ def histogram():
 
     for indx in range(len(fn_fp)):
         plt.plot(poolsize_list,inf_G2R_list[indx],label=str(fn_fp[indx]))
-    plt.title('Poolsize vs Average time for an Infected \n agent with a Green Badge to get Red Badge')
+    plt.title('Poolsize vs Expected time for an Infected \n agent with a Green Badge to get Red Badge')
     plt.xlabel('Poolsize')
-    plt.ylabel('Average Time in Days')
+    plt.ylabel('Expected Time to get correct badge')
     plt.legend()
     plt.show()
 
     for indx in range(len(fn_fp)):
         plt.plot(poolsize_list,not_inf_R2G_list[indx],label=str(fn_fp[indx]))
-    plt.title('Poolsize vs Average time for a Non-Infected \n agent with a Red Badge to get Green Badge')
+    plt.title('Poolsize vs Expected time for a Non-Infected \n agent with a Red Badge to get Green Badge')
     plt.xlabel('Poolsize')
-    plt.ylabel('Average Time in Days')
+    plt.ylabel('Expected Time to get correct badge')
     plt.legend()
     plt.show()
 
@@ -343,4 +351,75 @@ def histogram():
 
     print(inf_G2R_list, not_inf_R2G_list, infection_proportion_list)
 
-histogram()
+def starting_prevalence():
+
+    random.seed(42)
+
+    global poolsize
+    global fn
+    global fp
+    global infected_percentage
+
+    fn=0
+    fp=0
+
+    inf_G2R_list=[]
+    not_inf_R2G_list=[]
+    infection_proportion_list=[]
+
+    infected_percentage_list=[0.005,0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08]
+
+    poolsize_list=[0,1,2,5,10,15,20,25,30]
+
+    x=np.array(infected_percentage_list)
+    y=np.array(poolsize_list)
+    X,Y = np.meshgrid(x,y)
+
+    data_list={'Expected time for Infected to get Red badge from Green badge':np.zeros((len(y),len(x))),'Expected time for Non-Infected to get Green badge from Red badge':np.zeros((len(y),len(x))),'Proportion of population that has been Infected':np.zeros((len(y),len(x)))}
+
+
+    for i,infected_percentage in enumerate(infected_percentage_list):
+        print(len(infected_percentage_list)-i)
+        for j,poolsize in enumerate(poolsize_list):
+            a,b,c=worlds(101)
+            data_list['Expected time for Infected to get Red badge from Green badge'][j][i]=a
+            data_list['Expected time for Non-Infected to get Green badge from Red badge'][j][i]=b
+            data_list['Proportion of population that has been Infected'][j][i]=c
+
+    fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
+    surf = ax.plot_surface(X, Y, np.array(data_list['Expected time for Infected to get Red badge from Green badge']), cmap=cm.coolwarm,linewidth=0, antialiased=False)
+
+    # Add a color bar which maps values to colors.
+    plt.xlabel("Initial Prevalence")
+    plt.ylabel("Poolsize")
+    plt.title("Expected time for Infected to get Red badge from Green badge")
+    fig.colorbar(surf, shrink=0.5, aspect=5)
+    ax.view_init(30, -45)
+    plt.show()
+
+    fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
+    surf = ax.plot_surface(X, Y, np.array(data_list['Expected time for Non-Infected to get Green badge from Red badge']), cmap=cm.coolwarm,linewidth=0, antialiased=False)
+
+    # Add a color bar which maps values to colors.
+    plt.xlabel("Initial Prevalence")
+    plt.ylabel("Poolsize")
+    plt.title("Expected time for Non-Infected to get Green badge from Red badge")
+    fig.colorbar(surf, shrink=0.5, aspect=5)
+    ax.view_init(30, -45)
+    plt.show()
+
+    fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
+    surf = ax.plot_surface(X, Y, np.array(data_list['Proportion of population that has been Infected']), cmap=cm.coolwarm,linewidth=0, antialiased=False)
+
+    # Add a color bar which maps values to colors.
+    plt.xlabel("Initial Prevalence")
+    plt.ylabel("Poolsize")
+    plt.title("Proportion of population that has been Infected")
+    fig.colorbar(surf, shrink=0.5, aspect=5)
+    ax.view_init(30, -45)
+    plt.show()
+
+    print(data_list)
+
+histogram_fn_fp()
+starting_prevalence()
