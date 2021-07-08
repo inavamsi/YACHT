@@ -351,7 +351,7 @@ def histogram_fn_fp():
 
     print(inf_G2R_list, not_inf_R2G_list, infection_proportion_list)
 
-def starting_prevalence():
+def starting_prevalence(number_pools):
 
     random.seed(42)
 
@@ -359,6 +359,8 @@ def starting_prevalence():
     global fn
     global fp
     global infected_percentage
+    global no_pools
+    no_pools=number_pools
 
     fn=0
     fp=0
@@ -421,5 +423,7 @@ def starting_prevalence():
 
     print(data_list)
 
-histogram_fn_fp()
-starting_prevalence()
+#histogram_fn_fp()
+#starting_prevalence(10)
+#starting_prevalence(30)
+#starting_prevalence(50)
