@@ -194,6 +194,16 @@ freedom['Green']=1
 freedom['Orange']=0.5
 freedom['Red']=0
 
+testing_ratio2={}
+testing_ratio2['Green']=5
+testing_ratio2['Orange']=1
+testing_ratio2['Red']=1
+
+freedom2={}
+freedom2['Green']=1
+freedom2['Orange']=0
+freedom2['Red']=0
+
 costs=[(10,10,1),(30,5,1),(20,8,1)]
 
 values={}
@@ -207,7 +217,10 @@ for cost in costs:
 	for frac_poolsize in [0.001,0.005,0.01]:
 		temp=[]
 		for n in values['n']:
-			res=simulate(n, frac_poolsize, freedom, testing_ratio,fn,fp,beta,gamma,r,cost)
+			if frac_poolsize==0.001:
+				res=simulate(n, frac_poolsize, freedom2, testing_ratio2,fn,fp,beta,gamma,r,cost)
+			else:
+				res=simulate(n, frac_poolsize, freedom, testing_ratio,fn,fp,beta,gamma,r,cost)
 			temp.append(res)
 		l[cost]['n'].append(temp)
 

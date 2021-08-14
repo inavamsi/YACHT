@@ -3,10 +3,10 @@ import pandas as pd
 import numpy as np
 
 st.write("""
-# YACHT protocol
+# ABCDEFG protocol
 A badging cum pooling mechanism for effective epidemic control. Powered by [HealthBadge](https://www.healthbadge.org/).
 """)
-st.write("This is a simple mechanism for disease control where YACHT stands for 'Yet Another COVID Health Testing Protocol'. In this system we show improved testing rate while improving privacy at a cost of quarantining those that are infected. This is carried out through a badge which can be one of 3 colors : Green(G), Orange(O) and Red(R). A person testing negative in a pool is immediately givena green badge which entails complete freedom. An Orange badge obtained on testing ngetaive in a pool partially restricts the agent till the next test. A Red badge begotten on testing negative twice in a row mandates strict quarantine. We see that this simple system can control prevalence effectively without violating privacy of an individual.")
+st.write("This is a simple mechanism for disease control where 'ABCDEFG Protocol' stands for 'Adaptive Badging Control for a Decentralized Epidemic policy using Feasible Group testing Protocol'. In this system we show improved testing rate while improving privacy at a cost of quarantining those that are infected. This is carried out through a badge which can be one of 3 colors : Green(G), Orange(O) and Red(R). A person testing negative in a pool is immediately givena green badge which entails complete freedom. An Orange badge obtained on testing ngetaive in a pool partially restricts the agent till the next test. A Red badge begotten on testing negative twice in a row mandates strict quarantine. We see that this simple system can control prevalence effectively without violating privacy of an individual.")
 st.write("------------------------------------------------------------------------------------")
 
 pop=1000
@@ -55,6 +55,7 @@ freedom['Green']=st.sidebar.slider("Select freedom for Green badge (recommended 
 freedom['Orange']=st.sidebar.slider("Select freedom for Orange badge", min_value=0.0 , max_value=1.0 , value=0.5 , step=0.1 , format=None , key=None )
 freedom['Red']=st.sidebar.slider("Select freedom for Red badge (recommended 0)", min_value=0.0 , max_value=1.0 , value=0.0 , step=0.1 , format=None , key=None )
 
+dynamic_pooling=st.sidebar.checkbox("Dynamic Pooling",value=False)
 
 def weighted_sum(d):
 	wsum=0
@@ -70,24 +71,24 @@ def effective_pool_prevalence(d):
 	denominator =weighted_sum(d)
 	return numerator/denominator
 
-def effective_false_positive_rate(d):
+def effective_false_positive_rate(d,frac_poolsize):
 	return fp*(1-effective_pool_prevalence(d))**(frac_poolsize*pop-1)+(1-fn)*(1 - (1-effective_pool_prevalence(d))**(frac_poolsize*pop-1))
 
 def effective_false_negative_rate(d):
 	return fn
 
-def prop_tested(state,badge,d):
+def prop_tested(state,badge,d,frac_poolsize):
 	return r*dt*n*frac_poolsize*testing_ratio[badge]*d[state][badge]/weighted_sum(d)
 
-def tau(state1,badge1,state2,badge2,d):
+def tau(state1,badge1,state2,badge2,d,frac_poolsize):
 	if state1!=state2:
 		print("Error!Tau requires both states to be the same.")
 		return None
 
 	state=state1
 	badge_value={'Green':3,'Orange':2,'Red':1}
-	value=prop_tested(state1,badge1,d)
-	e_fp=effective_false_positive_rate(d)
+	value=prop_tested(state1,badge1,d,frac_poolsize)
+	e_fp=effective_false_positive_rate(d,frac_poolsize)
 	e_fn=effective_false_negative_rate(d)
 
 	if state =='S' or state == 'R':
@@ -121,6 +122,7 @@ def beta_summation(rep_badge,compartment_value):
 	return bsum
 
 def simulate():
+	global frac_poolsize
 	compartment_value={}
 	d_compartment_value={}
 	for state in states:
@@ -135,79 +137,82 @@ def simulate():
 	update_compartment_ts(compartment_value)
 	update_cumulative_quarantine(compartment_value)
 
-	#st.write(tau('S','Green','S','Orange',compartment_value))
-	#st.write(tau('S','Orange','S','Green',compartment_value))
-	#st.write(tau('S','Red','S','Orange',compartment_value))
-	#st.write(beta*beta_summation('Green',compartment_value))
 
 	for i in range(days):
+
+
 		d_compartment_value['S']['Green']=dt*(
-			-tau('S','Green','S','Orange',compartment_value)
-			+tau('S','Orange','S','Green',compartment_value)
-			+tau('S','Red','S','Orange',compartment_value)
+			-tau('S','Green','S','Orange',compartment_value,frac_poolsize)
+			+tau('S','Orange','S','Green',compartment_value,frac_poolsize)
+			+tau('S','Red','S','Orange',compartment_value,frac_poolsize)
 			-beta*beta_summation('Green',compartment_value)
 			+delta*compartment_value['S']['Red']
 			)
 
 		d_compartment_value['S']['Orange']=dt*(
-			-tau('S','Orange','S','Red',compartment_value)
-			-tau('S','Orange','S','Green',compartment_value)
-			+tau('S','Green','S','Orange',compartment_value)
+			-tau('S','Orange','S','Red',compartment_value,frac_poolsize)
+			-tau('S','Orange','S','Green',compartment_value,frac_poolsize)
+			+tau('S','Green','S','Orange',compartment_value,frac_poolsize)
 			-beta*beta_summation('Orange',compartment_value)
 			)
 
 		d_compartment_value['S']['Red']=dt*(
-			-tau('S','Red','S','Green',compartment_value)
-			+tau('S','Orange','S','Red',compartment_value)
+			-tau('S','Red','S','Green',compartment_value,frac_poolsize)
+			+tau('S','Orange','S','Red',compartment_value,frac_poolsize)
 			-delta*compartment_value['S']['Red']
 			)
 
 		d_compartment_value['I']['Green']=dt*(
-			-tau('I','Green','I','Orange',compartment_value)
-			+tau('I','Orange','I','Green',compartment_value)
-			+tau('I','Red','I','Green',compartment_value)
+			-tau('I','Green','I','Orange',compartment_value,frac_poolsize)
+			+tau('I','Orange','I','Green',compartment_value,frac_poolsize)
+			+tau('I','Red','I','Green',compartment_value,frac_poolsize)
 			+beta*beta_summation('Green',compartment_value)
 			-gamma*compartment_value['I']['Green']
 			+delta*compartment_value['I']['Red']
 			)
 
 		d_compartment_value['I']['Orange']=dt*(
-			-tau('I','Orange','I','Red',compartment_value)
-			-tau('I','Orange','I','Green',compartment_value)
-			+tau('I','Green','I','Orange',compartment_value)
+			-tau('I','Orange','I','Red',compartment_value,frac_poolsize)
+			-tau('I','Orange','I','Green',compartment_value,frac_poolsize)
+			+tau('I','Green','I','Orange',compartment_value,frac_poolsize)
 			+beta*beta_summation('Orange',compartment_value)
 			-gamma*compartment_value['I']['Orange']
 			)
 
 		d_compartment_value['I']['Red']=dt*(
-			-tau('I','Red','I','Green',compartment_value)
-			+tau('I','Orange','I','Red',compartment_value)
+			-tau('I','Red','I','Green',compartment_value,frac_poolsize)
+			+tau('I','Orange','I','Red',compartment_value,frac_poolsize)
 			-gamma*compartment_value['I']['Red']
 			-delta*compartment_value['I']['Red']
 			)
 
 		d_compartment_value['R']['Green']=dt*(
-			-tau('R','Green','R','Orange',compartment_value)
-			+tau('R','Orange','R','Green',compartment_value)
-			+tau('R','Red','R','Green',compartment_value)
+			-tau('R','Green','R','Orange',compartment_value,frac_poolsize)
+			+tau('R','Orange','R','Green',compartment_value,frac_poolsize)
+			+tau('R','Red','R','Green',compartment_value,frac_poolsize)
 			+gamma*compartment_value['I']['Green']
 			+delta*compartment_value['R']['Red']
 			)
 
 		d_compartment_value['R']['Orange']=dt*(
-			-tau('R','Orange','R','Green',compartment_value)
-			-tau('R','Orange','R','Red',compartment_value)
-			+tau('R','Green','R','Orange',compartment_value)
+			-tau('R','Orange','R','Green',compartment_value,frac_poolsize)
+			-tau('R','Orange','R','Red',compartment_value,frac_poolsize)
+			+tau('R','Green','R','Orange',compartment_value,frac_poolsize)
 			+gamma*compartment_value['I']['Orange']
 			)
 
 		d_compartment_value['R']['Red']=dt*(
-			-tau('R','Red','R','Green',compartment_value)
-			+tau('R','Orange','R','Red',compartment_value)
+			-tau('R','Red','R','Green',compartment_value,frac_poolsize)
+			+tau('R','Orange','R','Red',compartment_value,frac_poolsize)
 			+gamma*compartment_value['I']['Red']
 			-delta*compartment_value['R']['Red']
 			)
 
+		if dynamic_pooling:
+			if d_compartment_value['I']['Green']+d_compartment_value['I']['Orange']+d_compartment_value['I']['Red'] > 0:
+				frac_poolsize*=1.001
+			else:
+				frac_poolsize/=1.001
 		for state in states:
 			for badge in badges:
 				compartment_value[state][badge]+=d_compartment_value[state][badge]
@@ -286,16 +291,11 @@ cumulative_quarantine_percentage=cumulative_quarantine/days
 st.write("------------------------------------------------------------------------------------")
 
 st.write("The number of pools is "+str(n)+".")
-a=st.slider("Select scaling parameter for 'Number of Pools'", min_value=0 , max_value=10000 , value=0 , step=1 , format=None , key=None )
+a=st.slider("Select scaling parameter or cost for setting up a pool", min_value=0 , max_value=10000 , value=0 , step=1 , format=None , key=None )
 st.write("Total infected percentage is "+str(total_infected_percentage)+". Here 0 means no infection while 1 means no one is susceptible.")
 b=st.slider("Select scaling parameter for 'Total Infected percentage'", min_value=0 , max_value=10000 , value=0 , step=1 , format=None , key=None )
 st.write("Cumulative Quarantine is "+str(cumulative_quarantine_percentage)+ ". Here 0 means nobody is quarantined at all, while 1 means everyone is fully quarantined for the entire duration.")
 c=st.slider("Select scaling parameter for 'Cumulative Quarantine'", min_value=0 , max_value=10000 , value=0 , step=1 , format=None , key=None )
 
-total_tests=(int)(r*days*n)
-st.write("Total number of tests is "+str(total_tests)+ ". ")
-d=st.slider("Select scaling parameter for 'total tests'", min_value=0 , max_value=10000 , value=0 , step=1 , format=None , key=None )
-
-
-cost = a*number_of_pools + b*total_infected_percentage + c*cumulative_quarantine_percentage +d*total_tests
+cost = a*number_of_pools + b*total_infected_percentage + c*cumulative_quarantine_percentage
 st.write("The cost is "+ str(cost))
